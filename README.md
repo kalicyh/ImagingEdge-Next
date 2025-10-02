@@ -48,6 +48,10 @@ Images are downloaded in the best available quality:
    flutter run
    ```
 
+### Packaging (macOS)
+
+Run `scripts/package_macos.sh` to build a release `.app` bundle and `.dmg` image in `dist/macos`. Add `--skip-build` if you already have a fresh `flutter build macos --release`. Requires macOS with the [`create-dmg`](https://github.com/create-dmg/create-dmg) utility installed via `npm install --global create-dmg`.
+
 ## Limitations
 
 - **RAW Support**: Limited to JPEG downloads due to camera constraints.

@@ -46,6 +46,10 @@
    flutter run
    ```
 
+### 打包（macOS）
+
+在 macOS 上运行 `scripts/package_macos.sh`，脚本会在 `dist/macos` 目录生成发布版 `.app` 与 `.dmg`。如已执行过 `flutter build macos --release`，可添加 `--skip-build` 跳过编译。需要提前通过 `npm install --global create-dmg` 安装 [`create-dmg`](https://github.com/create-dmg/create-dmg) 工具。
+
 ## 限制
 
 - **RAW 支持**：受限于相机，仅支持 JPEG 下载

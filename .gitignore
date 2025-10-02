@@ -125,3 +125,4 @@ app.*.symbols
 lib/l10n/*.dart
 lib/l10n/*.json
 lib/l10n/untranslated_messages.txt
+dist/
