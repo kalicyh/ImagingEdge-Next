@@ -12,6 +12,37 @@ A modern Flutter desktop application for downloading images from Sony cameras, b
 - **Batch Download**: Download all, only new, or custom selections in one go.
 - **Progress Monitoring**: Track download speed, progress, and ETA in real time.
 
+## Screenshots
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <img src=".github/screenshots/CleanShot 2025-10-03 at 03.12.34@2x.png" width="400" alt="Main Interface"/>
+        <br/>
+        <b>Main Interface</b>
+      </td>
+      <td align="center">
+        <img src=".github/screenshots/CleanShot 2025-10-03 at 03.11.56@2x.png" width="400" alt="QR Code Scanner"/>
+        <br/>
+        <b>QR Code Scanner</b>
+      </td>
+    </tr>
+    <tr>
+      <td align="center">
+        <img src=".github/screenshots/CleanShot 2025-10-03 at 03.13.15@2x.png" width="400" alt="Image Browser"/>
+        <br/>
+        <b>Image Browser</b>
+      </td>
+      <td align="center">
+        <img src=".github/screenshots/CleanShot 2025-10-03 at 03.11.27@2x.png" width="400" alt="Settings"/>
+        <br/>
+        <b>Settings</b>
+      </td>
+    </tr>
+  </table>
+</div>
+
 ## How to Use
 
 1. **Prepare the Camera**:

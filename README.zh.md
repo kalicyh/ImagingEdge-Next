@@ -10,6 +10,37 @@
 - **批量下载**：支持一键选择全部、仅新照片或自定义选择并下载
 - **进度监控**：实时显示下载速度
 
+## 应用截图
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <img src=".github/screenshots/CleanShot 2025-10-03 at 03.12.34@2x.png" width="400" alt="主页面"/>
+        <br/>
+        <b>主页面</b>
+      </td>
+      <td align="center">
+        <img src=".github/screenshots/CleanShot 2025-10-03 at 03.11.56@2x.png" width="400" alt="二维码扫描"/>
+        <br/>
+        <b>二维码扫描</b>
+      </td>
+    </tr>
+    <tr>
+      <td align="center">
+        <img src=".github/screenshots/CleanShot 2025-10-03 at 03.13.15@2x.png" width="400" alt="图片浏览器"/>
+        <br/>
+        <b>图片浏览器</b>
+      </td>
+      <td align="center">
+        <img src=".github/screenshots/CleanShot 2025-10-03 at 03.11.27@2x.png" width="400" alt="设置"/>
+        <br/>
+        <b>设置</b>
+      </td>
+    </tr>
+  </table>
+</div>
+
 ## 使用指南
 
 1. **准备相机**：
