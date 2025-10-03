@@ -30,15 +30,19 @@ class FluidDock extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surface.withOpacity(theme.brightness == Brightness.dark ? 0.32 : 0.48),
+                color: theme.colorScheme.surface.withValues(
+                  alpha: theme.brightness == Brightness.dark ? 0.32 : 0.48,
+                ),
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
-                  color: Colors.white.withOpacity(theme.brightness == Brightness.dark ? 0.08 : 0.2),
+                  color: Colors.white.withValues(
+                    alpha: theme.brightness == Brightness.dark ? 0.08 : 0.2,
+                  ),
                   width: 1,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 18,
                     offset: const Offset(0, 6),
                   ),
@@ -103,9 +107,9 @@ class _DockButton extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 240),
         curve: Curves.easeOutCubic,
-  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
         decoration: BoxDecoration(
-          color: isActive ? activeColor.withOpacity(0.18) : Colors.transparent,
+          color: isActive ? activeColor.withValues(alpha: 0.18) : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Column(

@@ -39,15 +39,6 @@ class _ConnectionScreenState extends ConsumerState<ConnectionScreen> {
       extendBody: true,
       appBar: AppBar(
         title: Text(l10n.appTitle),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            tooltip: l10n.navSettings,
-            onPressed: () {
-              Navigator.pushNamed(context, '/settings');
-            },
-          ),
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

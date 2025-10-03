@@ -25,7 +25,7 @@ void main() async {
       center: true, // 窗口居中显示
       backgroundColor: Colors.transparent,
       skipTaskbar: false,
-      titleBarStyle: TitleBarStyle.normal,
+      titleBarStyle: TitleBarStyle.hidden,
       title: 'ImagingEdge Next',
     );
 

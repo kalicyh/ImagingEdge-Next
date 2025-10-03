@@ -37,25 +37,19 @@ class _ImagesScreenState extends ConsumerState<ImagesScreen> {
         title: Text(l10n.imagesTitle),
         // backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
-          // Refresh button
           IconButton(
-            onPressed: imagesState.isLoading ? null : () {
-              ref.read(imagesProvider.notifier).refreshImages();
-            },
-            icon: imagesState.isLoading 
+            onPressed: imagesState.isLoading
+                ? null
+                : () {
+                    ref.read(imagesProvider.notifier).refreshImages();
+                  },
+            icon: imagesState.isLoading
                 ? const SizedBox(
                     width: 16,
                     height: 16,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.refresh),
-          ),
-          // Settings button
-          IconButton(
-            onPressed: () {
-              Navigator.pushNamed(context, '/settings');
-            },
-            icon: const Icon(Icons.settings),
           ),
         ],
       ),
