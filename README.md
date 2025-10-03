@@ -12,6 +12,11 @@ A modern Flutter desktop application for downloading images from Sony cameras, b
 - **Batch Download**: Download all, only new, or custom selections in one go.
 - **Progress Monitoring**: Track download speed, progress, and ETA in real time.
 
+### 🧩 Platform Support
+- Built with Flutter to target macOS, Windows, Linux desktops, and Android mobile devices from a single codebase.
+- Functional testing completed on macOS and Android builds; additional platforms share the same implementation but are less exercised.
+- iOS requires the `NEHotspotConfiguration` entitlement for in-app WiFi provisioning, so ImagingEdge Next defers to the system Camera app for joining the camera network.
+
 ## Screenshots
 
 <div align="center">
@@ -51,6 +56,7 @@ A modern Flutter desktop application for downloading images from Sony cameras, b
 2. **Connect in the App**:
    - Launch ImagingEdge Next.
    - Tap "Scan QR Code" and scan the QR code displayed on the camera screen, or manually join the camera's WiFi network.
+  - On iOS devices, the app does not request the `NEHotspotConfiguration` entitlement; use the built-in Camera app to scan the QR code and join the WiFi network directly.
 
 3. **Browse Images**:
    - Open the images screen.
@@ -88,6 +94,7 @@ Run `scripts/package_macos.sh` to build a release `.app` bundle and `.dmg` image
 - **RAW Support**: Limited to JPEG downloads due to camera constraints.
 - **Camera Dependency**: Only works with cameras that provide "Send to Smartphone" mode.
 - **Network Requirements**: Devices must share the same WiFi network.
+- **iOS Hotspot Provisioning**: Direct WiFi configuration would require the `NEHotspotConfiguration` entitlement, so pairing relies on Apple's Camera app instead of ImagingEdge Next.
 
 ## Credits
 
