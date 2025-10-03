@@ -74,8 +74,12 @@ class _ImagesScreenState extends ConsumerState<ImagesScreen> {
       ),
       floatingActionButton: imagesState.hasImages && !downloadState.isDownloading
           ? FloatingActionButton.extended(
-              onPressed: () {
-                _showSelectionDialog(context);
+              onPressed: () async {
+                if (imagesState.hasSelection) {
+                  await _startDownload();
+                } else {
+                  _showSelectionDialog(context);
+                }
               },
               icon: const Icon(Icons.download),
               label: Text(
@@ -442,10 +446,10 @@ class _ImagesScreenState extends ConsumerState<ImagesScreen> {
               subtitle: Text(
                 l10n.imagesCount(imagesState.images.length),
               ),
-              onTap: () {
+              onTap: () async {
                 Navigator.pop(context);
                 ref.read(imagesProvider.notifier).selectAllImages();
-                _startDownload();
+                await _startDownload();
               },
             ),
             ListTile(
@@ -458,10 +462,10 @@ class _ImagesScreenState extends ConsumerState<ImagesScreen> {
                       .length,
                 ),
               ),
-              onTap: () {
+              onTap: () async {
                 Navigator.pop(context);
                 ref.read(imagesProvider.notifier).selectUndownloadedImages();
-                _startDownload();
+                await _startDownload();
               },
             ),
             if (imagesState.hasSelection)
@@ -471,9 +475,9 @@ class _ImagesScreenState extends ConsumerState<ImagesScreen> {
                 subtitle: Text(
                   l10n.imagesCount(imagesState.selectedCount),
                 ),
-                onTap: () {
+                onTap: () async {
                   Navigator.pop(context);
-                  _startDownload();
+                  await _startDownload();
                 },
               ),
           ],
@@ -488,10 +492,20 @@ class _ImagesScreenState extends ConsumerState<ImagesScreen> {
     );
   }
 
-  void _startDownload() {
-    final selectedImages = ref.read(imagesProvider).selectedImages;
-    if (selectedImages.isNotEmpty) {
-      ref.read(downloadProvider.notifier).startDownload(selectedImages);
+  Future<void> _startDownload() async {
+    final imagesState = ref.read(imagesProvider);
+    final selectedImages = imagesState.selectedImages;
+    if (selectedImages.isEmpty) {
+      return;
+    }
+
+    await ref.read(downloadProvider.notifier).startDownload(selectedImages);
+
+    if (!mounted) return;
+
+    final downloadState = ref.read(downloadProvider);
+    if (downloadState.progress.status == DownloadStatus.completed) {
+      ref.read(imagesProvider.notifier).clearSelection();
     }
   }
 }
