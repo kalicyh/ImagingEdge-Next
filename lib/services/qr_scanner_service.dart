@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class QRScannerService {
   static bool _isScanning = false;
+  static const MethodChannel _wifiChannel = MethodChannel('imagingedge/wifi');
 
   /// Create a scanner controller with sensible defaults for desktop.
   static MobileScannerController createController() {
@@ -43,22 +46,29 @@ class QRScannerService {
   }
 
   /// Check if camera is available by attempting to start a controller when needed.
-  static Future<bool> isCameraAvailable() async {
-    MobileScannerController? controller;
+  static Future<bool> isCameraAvailable(MobileScannerController controller) async {
     try {
       if (Platform.isMacOS || Platform.isLinux || Platform.isWindows) {
         return true;
       }
 
-      controller = createController();
       await controller.start();
-      await controller.stop();
       return true;
-    } catch (e) {
-      print('QRScannerService: 相机检查失败: $e');
+    } on MobileScannerException catch (e) {
+      // If the controller is not yet attached, wait a moment and retry once.
+      if (e.errorCode == MobileScannerErrorCode.controllerNotAttached) {
+        try {
+          await Future.delayed(const Duration(milliseconds: 200));
+          await controller.start();
+          return true;
+        } catch (error) {
+          print('QRScannerService: 相机检查失败(重试): $error');
+        }
+      }
+      print('QRScannerService: 相机检查失败: ${e.errorCode}');
       return false;
     } finally {
-      await controller?.dispose();
+      // Leave the controller running for the caller to manage.
     }
   }
 
@@ -92,6 +102,7 @@ class QRScannerService {
           ...params,
           'SSID': ssid,
           'PASSWORD': params['P'] ?? '',
+          'HIDDEN': params['H'] ?? params['HIDDEN'] ?? '',
           'FORMAT': 'WIFI',
           'RAW': trimmed,
         };
@@ -125,6 +136,7 @@ class QRScannerService {
           'S': computedSsid,
           'SSID': computedSsid,
           'PASSWORD': password,
+          'HIDDEN': params['H'] ?? params['HIDDEN'] ?? '',
           'FORMAT': 'W01',
           'RAW': trimmed,
         };
@@ -237,7 +249,11 @@ class QRScannerService {
   }
 
   /// Connect to WiFi network (placeholder).
-  static Future<bool> connectToWiFi(String ssid, String password) async {
+  static Future<bool> connectToWiFi(
+    String ssid,
+    String password, {
+    bool hidden = false,
+  }) async {
     try {
       final trimmedSsid = ssid.trim();
       if (trimmedSsid.isEmpty) {
@@ -245,6 +261,21 @@ class QRScannerService {
       }
 
       print('QRScannerService: 尝试连接WiFi - SSID: $trimmedSsid');
+
+      if (Platform.isAndroid) {
+        final permissionsGranted = await _ensureAndroidWifiPermissions();
+        if (!permissionsGranted) {
+          print('QRScannerService: WiFi连接失败 - 缺少所需权限');
+          return false;
+        }
+
+        final bool? result = await _wifiChannel.invokeMethod<bool>('connectToWifi', {
+          'ssid': trimmedSsid,
+          'password': password,
+          'hidden': hidden,
+        });
+        return result ?? false;
+      }
 
       if (Platform.isMacOS) {
         final interface = await _resolveWifiInterface();
@@ -281,17 +312,31 @@ class QRScannerService {
     String password, {
     int maxAttempts = 3,
     Duration verificationDelay = const Duration(seconds: 3),
+    bool hidden = false,
   }) async {
     final targetSsid = _normalizeSsid(ssid);
 
     if (!Platform.isMacOS) {
-      return await connectToWiFi(targetSsid, password);
+      final success = await connectToWiFi(targetSsid, password, hidden: hidden);
+      if (!Platform.isAndroid) {
+        return success;
+      }
+
+      if (!success) {
+        return false;
+      }
+
+      if (verificationDelay.inMilliseconds > 0) {
+        await Future.delayed(verificationDelay);
+      }
+
+      return await isConnectedToWifi(targetSsid);
     }
 
     await _refreshWifiNetworks();
 
     for (var attempt = 1; attempt <= maxAttempts; attempt++) {
-      final success = await connectToWiFi(targetSsid, password);
+      final success = await connectToWiFi(targetSsid, password, hidden: hidden);
       if (!success) {
         continue;
       }
@@ -316,6 +361,21 @@ class QRScannerService {
 
   static Future<String?> currentWifiSsid() async {
     if (!Platform.isMacOS) {
+      if (Platform.isAndroid) {
+        try {
+          final String? ssid = await _wifiChannel.invokeMethod<String>('getCurrentSsid');
+          if (ssid == null || ssid.isEmpty) {
+            return null;
+          }
+          return ssid;
+        } on MissingPluginException catch (e) {
+          print('QRScannerService: Android WiFi插件缺失: $e');
+          return null;
+        } on PlatformException catch (e) {
+          print('QRScannerService: 获取Android WiFi信息失败: $e');
+          return null;
+        }
+      }
       return null;
     }
 
@@ -354,6 +414,31 @@ class QRScannerService {
       return false;
     }
     return _normalizeSsid(current) == _normalizeSsid(ssid);
+  }
+
+  static Future<bool> _ensureAndroidWifiPermissions() async {
+    if (!Platform.isAndroid) {
+      return true;
+    }
+
+    final locationStatus = await Permission.locationWhenInUse.request();
+    if (!locationStatus.isGranted && !locationStatus.isLimited) {
+      final fallback = await Permission.location.request();
+      if (!fallback.isGranted && !fallback.isLimited) {
+        return false;
+      }
+    }
+
+    final nearbyStatus = await Permission.nearbyWifiDevices.request();
+    if (nearbyStatus.isPermanentlyDenied) {
+      return false;
+    }
+
+    if (!nearbyStatus.isGranted && !nearbyStatus.isLimited) {
+      print('QRScannerService: NEARBY_WIFI_DEVICES 权限未授予，可能影响联网能力');
+    }
+
+    return true;
   }
 
   /// Split payloads on unescaped semicolons.

@@ -45,7 +45,7 @@ class _QRScannerScreenState extends ConsumerState<QRScannerScreen> {
 
   Future<void> _checkCameraAvailability() async {
     try {
-      final isAvailable = await QRScannerService.isCameraAvailable();
+      final isAvailable = await QRScannerService.isCameraAvailable(_controller);
       if (!isAvailable) {
         setState(() {
           errorMessage = l10n.qrCameraUnavailable;
@@ -310,7 +310,13 @@ class _QRScannerScreenState extends ConsumerState<QRScannerScreen> {
       });
       final ssid = wifiData['SSID'] ?? wifiData['S'] ?? '';
       final password = wifiData['PASSWORD'] ?? wifiData['P'] ?? '';
-      final success = await QRScannerService.connectToWiFi(ssid, password);
+      final hiddenRaw = (wifiData['HIDDEN'] ?? wifiData['H'] ?? '').toLowerCase();
+      final isHiddenNetwork = hiddenRaw == 'true' || hiddenRaw == '1' || hiddenRaw == 'yes';
+      final success = await QRScannerService.connectToWiFi(
+        ssid,
+        password,
+        hidden: isHiddenNetwork,
+      );
       if (!mounted) return;
       if (success) {
         _showResult(l10n.connectionWifiConnecting(ssid));

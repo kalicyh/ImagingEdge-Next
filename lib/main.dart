@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -10,25 +11,30 @@ import 'providers/providers.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize window manager for desktop
-  await windowManager.ensureInitialized();
-  
-  // Set window options
-  const windowOptions = WindowOptions(
-    size: Size(475, 800), // 默认窗口大小：宽475，高800
-    minimumSize: Size(475, 600), // 最小窗口大小
-    center: true, // 窗口居中显示
-    backgroundColor: Colors.transparent,
-    skipTaskbar: false,
-    titleBarStyle: TitleBarStyle.normal,
-    title: 'ImagingEdge Next',
-  );
-  
-  await windowManager.waitUntilReadyToShow(windowOptions, () async {
-    await windowManager.show();
-    await windowManager.focus();
-  });
-  
+  // Initialize window manager for desktop platforms only.
+  if (!kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.macOS ||
+          defaultTargetPlatform == TargetPlatform.windows ||
+          defaultTargetPlatform == TargetPlatform.linux)) {
+    await windowManager.ensureInitialized();
+
+    // Set window options
+    const windowOptions = WindowOptions(
+      size: Size(475, 800), // 默认窗口大小：宽475，高800
+      minimumSize: Size(475, 600), // 最小窗口大小
+      center: true, // 窗口居中显示
+      backgroundColor: Colors.transparent,
+      skipTaskbar: false,
+      titleBarStyle: TitleBarStyle.normal,
+      title: 'ImagingEdge Next',
+    );
+
+    await windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.show();
+      await windowManager.focus();
+    });
+  }
+
   // Initialize notification service
   try {
     await NotificationService.initialize();

@@ -41,7 +41,7 @@ dependencies:
   http: ^1.1.0                           # HTTP requests for SOAP API
   xml: ^6.3.0                           # XML parsing for camera responses
   path_provider: ^2.1.0                 # Get user directories
-  flutter_local_notifications: ^16.3.0   # Desktop notifications
+  flutter_local_notifications: ^19.4.2   # Desktop notifications
   shared_preferences: ^2.2.0            # Store settings
   permission_handler: ^11.0.0           # File system permissions
   
