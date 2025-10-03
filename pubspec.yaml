@@ -38,22 +38,22 @@ dependencies:
   cupertino_icons: ^1.0.8
   
   # Core dependencies for ImagingEdge functionality
-  http: ^1.1.0                           # HTTP requests for SOAP API
-  xml: ^6.3.0                           # XML parsing for camera responses
-  path_provider: ^2.1.0                 # Get user directories
+  http: ^1.5.0                           # HTTP requests for SOAP API
+  xml: ^6.6.1                           # XML parsing for camera responses
+  path_provider: ^2.1.5                 # Get user directories
   flutter_local_notifications: ^19.4.2   # Desktop notifications
-  shared_preferences: ^2.2.0            # Store settings
-  permission_handler: ^11.0.0           # File system permissions
+  shared_preferences: ^2.5.3            # Store settings
+  permission_handler: ^12.0.1           # File system permissions
   
   # State management and UI
-  flutter_riverpod: ^2.4.9              # State management
-  cached_network_image: ^3.3.0          # Image caching and preview
-  path: ^1.8.3                          # Path manipulation
+  flutter_riverpod: ^3.0.1              # State management
+  cached_network_image: ^3.4.1          # Image caching and preview
+  path: ^1.9.1                          # Path manipulation
   
   # UI enhancements
-  file_selector: ^1.0.2                 # Directory picker
-  percent_indicator: ^4.2.3             # Progress indicators
-  window_manager: ^0.3.7                # Window management for desktop
+  file_selector: ^1.0.4                 # Directory picker
+  percent_indicator: ^4.2.5             # Progress indicators
+  window_manager: ^0.5.1                # Window management for desktop
   
   # QR code scanning
   ai_barcode_scanner: ^7.1.0  # Better macOS support
@@ -70,12 +70,12 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
   
   # Additional dev dependencies
-  riverpod_lint: ^2.3.7                 # Riverpod linting
-  mockito: ^5.4.2                       # Testing mocks
-  flutter_launcher_icons: ^0.14.1       # App icon generation
+  riverpod_lint: ^3.0.1                 # Riverpod linting
+  mockito: ^5.5.0                       # Testing mocks
+  flutter_launcher_icons: ^0.14.4       # App icon generation
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
