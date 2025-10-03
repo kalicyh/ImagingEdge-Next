@@ -229,8 +229,8 @@ class _ImagesScreenState extends ConsumerState<ImagesScreen> {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            Colors.white.withOpacity(0.35),
-                            Colors.white.withOpacity(0.15),
+                            Colors.white.withValues(alpha: 0.35),
+                            Colors.white.withValues(alpha: 0.15),
                           ],
                         ),
                       ),
@@ -245,7 +245,10 @@ class _ImagesScreenState extends ConsumerState<ImagesScreen> {
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.25),
+          color: Theme.of(context)
+            .colorScheme
+            .primary
+            .withValues(alpha: 0.25),
                   ),
                 ),
               ),
@@ -258,7 +261,7 @@ class _ImagesScreenState extends ConsumerState<ImagesScreen> {
                 decoration: BoxDecoration(
                   color: isSelected
                       ? Theme.of(context).colorScheme.primary
-                      : Colors.black.withOpacity(0.24),
+                      : Colors.black.withValues(alpha: 0.24),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -276,11 +279,11 @@ class _ImagesScreenState extends ConsumerState<ImagesScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.45),
+                        color: Colors.white.withValues(alpha: 0.45),
                         borderRadius: BorderRadius.circular(48),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: Colors.black.withValues(alpha: 0.1),
                             blurRadius: 18,
                             offset: const Offset(0, 8),
                           ),
@@ -313,7 +316,7 @@ class _ImagesScreenState extends ConsumerState<ImagesScreen> {
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      Colors.black.withOpacity(0.7),
+                      Colors.black.withValues(alpha: 0.7),
                     ],
                   ),
                 ),

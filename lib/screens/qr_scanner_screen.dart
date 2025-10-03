@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:imagingedge_next/l10n/app_localizations.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../providers/camera_provider.dart' as camera;
 import '../services/qr_scanner_service.dart';
+import '../utils/logger.dart';
 
 class QRScannerScreen extends ConsumerStatefulWidget {
   const QRScannerScreen({super.key});
@@ -72,7 +72,7 @@ class _QRScannerScreenState extends ConsumerState<QRScannerScreen> {
           Expanded(
             flex: 1,
             child: Container(
-              color: Colors.black.withOpacity(0.8),
+              color: Colors.black.withValues(alpha: 0.8),
               width: double.infinity,
               padding: const EdgeInsets.all(16.0),
               child: LayoutBuilder(
@@ -232,9 +232,7 @@ class _QRScannerScreenState extends ConsumerState<QRScannerScreen> {
             });
             await _processQRData(scannedValue);
           },
-          onDispose: () {
-            print('AI scanner disposed');
-          },
+          onDispose: () => logInfo('AI scanner disposed', name: 'QRScannerScreen'),
         );
       },
     );

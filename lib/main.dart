@@ -7,6 +7,7 @@ import 'package:window_manager/window_manager.dart';
 import 'screens/screens.dart';
 import 'services/services.dart';
 import 'providers/providers.dart';
+import 'utils/utils.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,8 +40,8 @@ void main() async {
   try {
     await NotificationService.initialize();
     await NotificationService.requestPermissions();
-  } catch (e) {
-    print('Warning: Failed to initialize notifications: $e');
+  } catch (e, stack) {
+    logWarning('Failed to initialize notifications', error: e, stackTrace: stack);
   }
   
   runApp(const ProviderScope(child: ImagingEdgeApp()));
@@ -53,10 +54,10 @@ class ImagingEdgeApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
 
-    Locale? locale;
-    if (settings.localeCode != null && settings.localeCode!.isNotEmpty && settings.localeCode != 'system') {
-      locale = Locale(settings.localeCode!);
-    }
+    final localeCode = settings.localeCode;
+    final Locale? locale = localeCode != 'system' && localeCode.isNotEmpty
+        ? Locale(localeCode)
+        : null;
 
     return MaterialApp(
       onGenerateTitle: (context) =>
@@ -74,8 +75,9 @@ class ImagingEdgeApp extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       localeListResolutionCallback: (locales, supported) {
-        if (settings.localeCode != null && settings.localeCode!.isNotEmpty && settings.localeCode != 'system') {
-          return Locale(settings.localeCode!);
+        final overrideCode = settings.localeCode;
+        if (overrideCode.isNotEmpty && overrideCode != 'system') {
+          return Locale(overrideCode);
         }
         if (locales != null) {
           for (final localeOption in locales) {

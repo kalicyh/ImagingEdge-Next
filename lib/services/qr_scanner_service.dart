@@ -1,13 +1,21 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:ai_barcode_scanner/ai_barcode_scanner.dart';
 import 'package:flutter/services.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import '../utils/logger.dart';
+
 class QRScannerService {
+  static const _logName = 'QRScannerService';
   static bool _isScanning = false;
   static const MethodChannel _wifiChannel = MethodChannel('imagingedge/wifi');
+
+  static void _info(String message) => logInfo(message, name: _logName);
+
+  static void _warn(String message, {Object? error, StackTrace? stackTrace}) =>
+      logWarning(message, name: _logName, error: error, stackTrace: stackTrace);
 
   /// Create a scanner controller with sensible defaults for desktop.
   static MobileScannerController createController() {
@@ -61,11 +69,11 @@ class QRScannerService {
           await Future.delayed(const Duration(milliseconds: 200));
           await controller.start();
           return true;
-        } catch (error) {
-          print('QRScannerService: 相机检查失败(重试): $error');
+        } catch (error, stack) {
+          _warn('Camera availability retry failed: $error', error: error, stackTrace: stack);
         }
       }
-      print('QRScannerService: 相机检查失败: ${e.errorCode}');
+      _warn('Camera availability check failed: ${e.errorCode}', error: e);
       return false;
     } finally {
       // Leave the controller running for the caller to manage.
@@ -143,8 +151,8 @@ class QRScannerService {
       }
 
       return null;
-    } catch (e) {
-      print('QRScannerService: WiFi QR解析失败: $e');
+    } catch (e, stack) {
+      _warn('Failed to parse Wi-Fi QR code: $e', error: e, stackTrace: stack);
       return null;
     }
   }
@@ -242,8 +250,8 @@ class QRScannerService {
       }
 
       return null;
-    } catch (e) {
-      print('QRScannerService: 相机QR解析失败: $e');
+    } catch (e, stack) {
+      _warn('Failed to parse camera QR code: $e', error: e, stackTrace: stack);
       return null;
     }
   }
@@ -260,12 +268,12 @@ class QRScannerService {
         return false;
       }
 
-      print('QRScannerService: 尝试连接WiFi - SSID: $trimmedSsid');
+  _info('Attempting Wi-Fi connection to $trimmedSsid');
 
       if (Platform.isAndroid) {
         final permissionsGranted = await _ensureAndroidWifiPermissions();
         if (!permissionsGranted) {
-          print('QRScannerService: WiFi连接失败 - 缺少所需权限');
+          _warn('Wi-Fi connection failed due to missing permissions');
           return false;
         }
 
@@ -280,7 +288,7 @@ class QRScannerService {
       if (Platform.isMacOS) {
         final interface = await _resolveWifiInterface();
         if (interface == null) {
-          print('QRScannerService: 未找到可用的 Wi-Fi 接口');
+          _warn('No Wi-Fi interface available on macOS');
           return false;
         }
 
@@ -292,8 +300,9 @@ class QRScannerService {
         const toolPath = '/usr/sbin/networksetup';
         final result = await Process.run(toolPath, arguments);
         if (result.exitCode != 0) {
-          print(
-              'QRScannerService: networksetup失败 (code ${result.exitCode}): ${result.stderr} ${result.stdout}');
+          _warn(
+            'networksetup failed with code ${result.exitCode}: ${result.stderr} ${result.stdout}',
+          );
           return false;
         }
         return true;
@@ -301,8 +310,8 @@ class QRScannerService {
 
       // TODO: Implement platform-specific logic for other systems as needed.
       return true;
-    } catch (e) {
-      print('QRScannerService: WiFi连接失败: $e');
+    } catch (e, stack) {
+      _warn('Wi-Fi connection attempt threw an error: $e', error: e, stackTrace: stack);
       return false;
     }
   }
@@ -351,7 +360,7 @@ class QRScannerService {
       }
 
       if (attempt < maxAttempts) {
-        print('QRScannerService: 未检测到目标网络，正在进行第${attempt + 1}次重试');
+        _info('Target network not detected, retrying (${attempt + 1}/$maxAttempts)');
         await _refreshWifiNetworks();
       }
     }
@@ -368,11 +377,11 @@ class QRScannerService {
             return null;
           }
           return ssid;
-        } on MissingPluginException catch (e) {
-          print('QRScannerService: Android WiFi插件缺失: $e');
+        } on MissingPluginException catch (e, stack) {
+          _warn('Android Wi-Fi plugin missing', error: e, stackTrace: stack);
           return null;
-        } on PlatformException catch (e) {
-          print('QRScannerService: 获取Android WiFi信息失败: $e');
+        } on PlatformException catch (e, stack) {
+          _warn('Failed to obtain Android Wi-Fi information', error: e, stackTrace: stack);
           return null;
         }
       }
@@ -388,7 +397,7 @@ class QRScannerService {
       const toolPath = '/usr/sbin/networksetup';
       final result = await Process.run(toolPath, ['-getairportnetwork', interface]);
       if (result.exitCode != 0) {
-        print('QRScannerService: 获取当前网络失败: ${result.stderr}');
+        _warn('Failed to get current macOS network: ${result.stderr}');
         return null;
       }
 
@@ -402,8 +411,8 @@ class QRScannerService {
       }
 
       return output;
-    } catch (e) {
-      print('QRScannerService: 读取当前WiFi失败: $e');
+    } catch (e, stack) {
+      _warn('Failed to read current Wi-Fi network', error: e, stackTrace: stack);
       return null;
     }
   }
@@ -435,7 +444,7 @@ class QRScannerService {
     }
 
     if (!nearbyStatus.isGranted && !nearbyStatus.isLimited) {
-      print('QRScannerService: NEARBY_WIFI_DEVICES 权限未授予，可能影响联网能力');
+      _warn('NEARBY_WIFI_DEVICES permission not granted; connectivity may be limited');
     }
 
     return true;
@@ -557,7 +566,7 @@ class QRScannerService {
       const toolPath = '/usr/sbin/networksetup';
       final result = await Process.run(toolPath, ['-listallhardwareports']);
       if (result.exitCode != 0) {
-        print('QRScannerService: 无法获取硬件端口列表: ${result.stderr}');
+        _warn('Failed to list hardware ports: ${result.stderr}');
         return _cachedWifiInterface = 'en0';
       }
 
@@ -579,8 +588,8 @@ class QRScannerService {
       }
 
       return _cachedWifiInterface = 'en0';
-    } catch (e) {
-      print('QRScannerService: 解析Wi-Fi接口失败: $e');
+    } catch (e, stack) {
+      _warn('Failed to resolve Wi-Fi interface', error: e, stackTrace: stack);
       return _cachedWifiInterface = 'en0';
     }
   }
@@ -595,10 +604,10 @@ class QRScannerService {
           '/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport';
       final result = await Process.run(airportPath, ['-s']);
       if (result.exitCode != 0) {
-        print('QRScannerService: Wi-Fi 刷新失败: ${result.stderr}');
+        _warn('Wi-Fi refresh command failed: ${result.stderr}');
       }
-    } catch (e) {
-      print('QRScannerService: Wi-Fi 刷新异常: $e');
+    } catch (e, stack) {
+      _warn('Wi-Fi refresh command threw an error', error: e, stackTrace: stack);
     }
   }
 

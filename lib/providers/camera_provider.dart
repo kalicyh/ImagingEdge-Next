@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/models.dart';
 import '../services/services.dart';
+import '../utils/logger.dart';
 import 'settings_provider.dart';
 
 /// Camera connection state
@@ -57,37 +58,64 @@ class CameraState {
 }
 
 /// Camera provider implementation
-class CameraNotifier extends StateNotifier<CameraState> {
+class CameraNotifier extends Notifier<CameraState> {
   static const wifiErrorMessageCode = 'camera_wifi_error';
-  CameraNotifier(this._settings) : super(const CameraState()) {
+
+  AppSettings? _settings;
+  ImagingEdgeService? _service;
+  Timer? _connectionTimer;
+  bool _initialized = false;
+
+  @override
+  CameraState build() {
+    _syncSettings();
+    return const CameraState();
+  }
+
+  void _syncSettings() {
+    if (_initialized) {
+      return;
+    }
+
+    _initialized = true;
+
+    final currentSettings = ref.read(settingsProvider);
+    _applySettings(currentSettings);
+
+    ref.listen<AppSettings>(
+      settingsProvider,
+      (previous, next) => _applySettings(next),
+      fireImmediately: false,
+    );
+
+    ref.onDispose(() {
+      _stopDaemonMode();
+    });
+  }
+
+  void _applySettings(AppSettings settings) {
+    _settings = settings;
     _initializeService();
   }
 
-  AppSettings _settings;
-  ImagingEdgeService? _service;
-  Timer? _connectionTimer;
-
   void _initializeService() {
-    _service = ImagingEdgeService(
-      address: _settings.cameraAddress,
-      port: _settings.cameraPort,
-      debug: _settings.debugMode,
-    );
-  }
+    final settings = _settings;
+    if (settings == null) {
+      _service = null;
+      return;
+    }
 
-  /// Update service when settings change
-  void updateSettings(AppSettings settings) {
     _service = ImagingEdgeService(
       address: settings.cameraAddress,
       port: settings.cameraPort,
       debug: settings.debugMode,
     );
-    _settings = settings;
   }
 
   /// Connect to camera
   Future<void> connect({Map<String, String>? wifiInfo}) async {
-    if (_service == null) return;
+    final settings = _settings;
+    if (_service == null || settings == null) return;
     
     state = state.copyWith(
       connectionState: ConnectionState.connecting,
@@ -113,19 +141,21 @@ class CameraNotifier extends StateNotifier<CameraState> {
       );
 
       // Show notification if enabled
-      if (_settings.notificationsEnabled) {
+      if (settings.notificationsEnabled) {
         await NotificationService.showTransferStartNotification(
-          localeCode: _settings.localeCode,
+          localeCode: settings.localeCode,
         );
       }
 
       // Start daemon mode if enabled
-      if (_settings.daemonMode) {
+      if (settings.daemonMode) {
         _startDaemonMode();
       }
-    } catch (e) {
-      if (_settings.debugMode) {
-        print('Camera connection failed: $e');
+    } catch (e, stack) {
+      if (settings.debugMode) {
+        logDebug('Camera connection failed: $e');
+      } else {
+        logWarning('Camera connection failed', error: e, stackTrace: stack);
       }
       state = state.copyWith(
         connectionState: ConnectionState.error,
@@ -133,9 +163,9 @@ class CameraNotifier extends StateNotifier<CameraState> {
       );
 
       // Show error notification if enabled
-      if (_settings.notificationsEnabled) {
+      if (settings.notificationsEnabled) {
         await NotificationService.showConnectionErrorNotification(
-          localeCode: _settings.localeCode,
+          localeCode: settings.localeCode,
         );
       }
     }
@@ -173,19 +203,20 @@ class CameraNotifier extends StateNotifier<CameraState> {
   Future<void> disconnect() async {
     _stopDaemonMode();
     
+    final settings = _settings;
     if (_service != null && state.isConnected) {
       try {
         await _service!.endTransfer();
         
         // Show notification if enabled
-        if (_settings.notificationsEnabled) {
+        if (settings?.notificationsEnabled ?? false) {
           await NotificationService.showTransferEndNotification(
-            localeCode: _settings.localeCode,
+            localeCode: settings!.localeCode,
           );
         }
-      } catch (e) {
+      } catch (e, stack) {
         // Ignore errors when disconnecting
-        print('Error ending transfer: $e');
+        logWarning('Error ending transfer', error: e, stackTrace: stack);
       }
     }
 
@@ -222,22 +253,9 @@ class CameraNotifier extends StateNotifier<CameraState> {
     _connectionTimer = null;
   }
 
-  @override
-  void dispose() {
-    _stopDaemonMode();
-    super.dispose();
-  }
 }
 
 /// Camera provider
-final cameraProvider = StateNotifierProvider<CameraNotifier, CameraState>((ref) {
-  final settings = ref.watch(settingsProvider);
-  final notifier = CameraNotifier(settings);
-  
-  // Listen to settings changes
-  ref.listen(settingsProvider, (previous, next) {
-    notifier.updateSettings(next);
-  });
-  
-  return notifier;
-});
+final cameraProvider = NotifierProvider<CameraNotifier, CameraState>(
+  CameraNotifier.new,
+);

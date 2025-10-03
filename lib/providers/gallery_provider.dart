@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -48,10 +49,49 @@ class GalleryState {
   }
 }
 
-class GalleryNotifier extends StateNotifier<GalleryState> {
-  GalleryNotifier(this._settings) : super(const GalleryState());
+class GalleryNotifier extends Notifier<GalleryState> {
+  AppSettings? _settings;
+  bool _initialized = false;
+  bool _initialLoadScheduled = false;
 
-  AppSettings _settings;
+  @override
+  GalleryState build() {
+    _ensureSettingsListener();
+    return const GalleryState();
+  }
+
+  void _ensureSettingsListener() {
+    if (_initialized) return;
+    _initialized = true;
+
+    final currentSettings = ref.read(settingsProvider);
+    _applySettings(currentSettings);
+
+    ref.listen<AppSettings>(
+      settingsProvider,
+      (previous, next) {
+        final directoryChanged = next.outputDirectory != _settings?.outputDirectory;
+        _applySettings(next);
+        if (directoryChanged) {
+          unawaited(loadImages());
+        }
+      },
+      fireImmediately: false,
+    );
+
+    ref.onDispose(() {
+      _initialLoadScheduled = false;
+    });
+
+    if (!_initialLoadScheduled) {
+      _initialLoadScheduled = true;
+      Future.microtask(loadImages);
+    }
+  }
+
+  void _applySettings(AppSettings settings) {
+    _settings = settings;
+  }
 
   static const Set<String> _supportedExtensions = {
     '.jpg',
@@ -68,8 +108,9 @@ class GalleryNotifier extends StateNotifier<GalleryState> {
     state = state.copyWith(isLoading: true, errorMessage: null);
 
     try {
-      final directoryPath = _settings.outputDirectory.isNotEmpty
-          ? _settings.outputDirectory
+      final settings = _settings;
+      final directoryPath = settings != null && settings.outputDirectory.isNotEmpty
+          ? settings.outputDirectory
           : (await FileManager.getDefaultOutputDirectory()).path;
 
       final directory = Directory(directoryPath);
@@ -122,20 +163,8 @@ class GalleryNotifier extends StateNotifier<GalleryState> {
     }
   }
 
-  void updateSettings(AppSettings settings) {
-    _settings = settings;
-    loadImages();
-  }
 }
 
-final galleryProvider = StateNotifierProvider<GalleryNotifier, GalleryState>((ref) {
-  final settings = ref.read(settingsProvider);
-  final notifier = GalleryNotifier(settings);
-
-  ref.listen(settingsProvider, (previous, next) {
-    if (previous == next) return;
-    notifier.updateSettings(next);
-  });
-
-  return notifier;
-});
+final galleryProvider = NotifierProvider<GalleryNotifier, GalleryState>(
+  GalleryNotifier.new,
+);

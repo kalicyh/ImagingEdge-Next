@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../utils/logger.dart';
+
 /// Settings configuration class
 class AppSettings {
   final String cameraAddress;
@@ -48,9 +50,11 @@ class AppSettings {
 }
 
 /// Settings provider implementation
-class SettingsNotifier extends StateNotifier<AppSettings> {
-  SettingsNotifier() : super(const AppSettings()) {
+class SettingsNotifier extends Notifier<AppSettings> {
+  @override
+  AppSettings build() {
     _loadSettings();
+    return const AppSettings();
   }
 
   static const String _keyAddress = 'camera_address';
@@ -75,9 +79,9 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
         daemonMode: prefs.getBool(_keyDaemonMode) ?? false,
         localeCode: prefs.getString(_keyLocale) ?? 'system',
       );
-    } catch (e) {
+    } catch (e, stack) {
       // Handle error, keep default settings
-      print('Error loading settings: $e');
+      logWarning('Error loading settings', error: e, stackTrace: stack);
     }
   }
 
@@ -93,8 +97,8 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       await prefs.setBool(_keyNotifications, state.notificationsEnabled);
       await prefs.setBool(_keyDaemonMode, state.daemonMode);
       await prefs.setString(_keyLocale, state.localeCode);
-    } catch (e) {
-      print('Error saving settings: $e');
+    } catch (e, stack) {
+      logWarning('Error saving settings', error: e, stackTrace: stack);
     }
   }
 
@@ -148,6 +152,6 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
 }
 
 /// Settings provider
-final settingsProvider = StateNotifierProvider<SettingsNotifier, AppSettings>((ref) {
-  return SettingsNotifier();
-});
+final settingsProvider = NotifierProvider<SettingsNotifier, AppSettings>(
+  SettingsNotifier.new,
+);

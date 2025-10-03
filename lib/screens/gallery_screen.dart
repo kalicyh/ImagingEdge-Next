@@ -175,7 +175,7 @@ class _GalleryTile extends StatelessWidget {
             fit: BoxFit.cover,
             errorBuilder: (context, error, stackTrace) {
               return Container(
-                color: theme.colorScheme.surfaceVariant.withOpacity(0.6),
+                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
                 child: const Icon(Icons.broken_image, size: 32),
               );
             },
@@ -191,7 +191,7 @@ class _GalleryTile extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.35),
+                    color: Colors.black.withValues(alpha: 0.35),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -210,7 +210,7 @@ class _GalleryTile extends StatelessWidget {
                       Text(
                         '${FileManager.formatFileSize(item.size)} · ${dateFormatter.format(item.modified)}',
                         style: theme.textTheme.labelSmall?.copyWith(
-                          color: Colors.white.withOpacity(0.8),
+                          color: Colors.white.withValues(alpha: 0.8),
                         ),
                       ),
                     ],

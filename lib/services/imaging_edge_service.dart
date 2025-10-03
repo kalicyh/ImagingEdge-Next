@@ -9,6 +9,8 @@ class ImagingEdgeService {
   final int port;
   final bool debug;
 
+  static const _logName = 'ImagingEdgeService';
+
   late final String _baseUrl;
   late final String _controlUrl;
   late final String _contentDirectoryUrl;
@@ -24,10 +26,19 @@ class ImagingEdgeService {
     _contentDirectoryUrl = '$_baseUrl/upnp/control/ContentDirectory';
   }
 
+  void _logDebug(String message) {
+    if (debug) {
+      logDebug(message, name: _logName);
+    }
+  }
+
+  void _logWarning(String message, {Object? error, StackTrace? stackTrace}) =>
+      logWarning(message, name: _logName, error: error, stackTrace: stackTrace);
+
   /// Test connection to camera and get service information
   Future<CameraModel> getServiceInfo() async {
     try {
-      if (debug) print('Getting service info from $_baseUrl');
+  _logDebug('Getting service info from $_baseUrl');
       
       final response = await http.get(
         Uri.parse('$_baseUrl/DmsDescPush.xml'),
@@ -36,7 +47,7 @@ class ImagingEdgeService {
 
       if (response.statusCode == 200) {
         final services = XmlParser.parseServiceDescription(response.body);
-        if (debug) print('Found services: $services');
+  _logDebug('Found services: $services');
         
         return CameraModel(
           address: address,
@@ -47,8 +58,8 @@ class ImagingEdgeService {
       } else {
         throw ImagingEdgeException('Failed to get service info: HTTP ${response.statusCode}');
       }
-    } catch (e) {
-      if (debug) print('Error getting service info: $e');
+    } catch (e, stack) {
+      _logWarning('Error getting service info', error: e, stackTrace: stack);
       throw ImagingEdgeException('Failed to connect to camera: $e');
     }
   }
@@ -57,20 +68,21 @@ class ImagingEdgeService {
   Future<void> startTransfer() async {
     try {
       if (_transferActive) {
-        if (debug) print('Transfer already active, skipping start request.');
+        _logDebug('Transfer already active, skipping start request.');
         return;
       }
 
-      if (debug) print('Starting transfer...');
+      _logDebug('Starting transfer...');
       
       final response = await _sendSoapRequest(
         'X_TransferStart',
         XmlParser.createTransferStartRequest(),
       );
       
-      if (debug) print('Transfer start response: ${response.statusCode}');
+      _logDebug('Transfer start response: ${response.statusCode}');
       _transferActive = true;
-    } catch (e) {
+    } catch (e, stack) {
+      _logWarning('Failed to start transfer', error: e, stackTrace: stack);
       throw ImagingEdgeException('Failed to start transfer: $e');
     }
   }
@@ -78,28 +90,25 @@ class ImagingEdgeService {
   /// End transfer mode on camera
   Future<void> endTransfer() async {
     try {
-      if (debug) {
-        final status = _transferActive ? 'active' : 'inactive';
-        print('Sending transfer end request (local state: $status).');
-      }
+      final status = _transferActive ? 'active' : 'inactive';
+      _logDebug('Sending transfer end request (local state: $status).');
 
       final response = await _sendSoapRequest(
         'X_TransferEnd',
         XmlParser.createTransferEndRequest(),
       );
 
-      if (debug) print('Transfer end response: ${response.statusCode}');
+      _logDebug('Transfer end response: ${response.statusCode}');
       _transferActive = false;
-    } catch (e) {
+    } catch (e, stack) {
       final message = e.toString();
       if (message.contains('errorCode>402') ||
           message.toLowerCase().contains('action x_transferend failed')) {
-        if (debug) {
-          print('Transfer already terminated on camera side. Clearing local state.');
-        }
+        _logDebug('Transfer already terminated on camera side. Clearing local state.');
         _transferActive = false;
         return;
       }
+      _logWarning('Failed to end transfer', error: e, stackTrace: stack);
       throw ImagingEdgeException('Failed to end transfer: $e');
     }
   }
@@ -117,9 +126,7 @@ class ImagingEdgeService {
         requestCount: requestCount,
       );
     } on ImagingEdgeException catch (e) {
-      if (debug) {
-        print('PushList content fetch failed: $e, falling back to ContentDirectory browse.');
-      }
+      _logDebug('PushList content fetch failed: $e, falling back to ContentDirectory browse.');
       return await _getContentDirectoryContent(
         containerId,
         startIndex: startIndex,
@@ -133,7 +140,7 @@ class ImagingEdgeService {
     required int startIndex,
     required int requestCount,
   }) async {
-    if (debug) print('Getting directory content for container: $containerId via XPushList');
+    _logDebug('Getting directory content for container: $containerId via XPushList');
 
     final response = await _sendSoapRequest(
       'X_GetContentList',
@@ -145,7 +152,7 @@ class ImagingEdgeService {
     );
 
     final items = XmlParser.parseDirectoryContent(response.body);
-    if (debug) print('Found ${items.length} items in directory (XPushList)');
+    _logDebug('Found ${items.length} items in directory (XPushList)');
 
     return items;
   }
@@ -155,9 +162,9 @@ class ImagingEdgeService {
     required int startIndex,
     required int requestCount,
   }) async {
-    if (debug) {
-      print('Getting directory content for container: $containerId via ContentDirectory Browse (start=$startIndex)');
-    }
+    _logDebug(
+      'Getting directory content for container: $containerId via ContentDirectory Browse (start=$startIndex)',
+    );
 
     final response = await _sendContentDirectoryRequest(
       XmlParser.createBrowseRequest(
@@ -170,9 +177,7 @@ class ImagingEdgeService {
     final document = XmlParser.parseSoapEnvelope(response.body);
     final resultXml = document.resultXml.trim();
     if (resultXml.isEmpty) {
-      if (debug) {
-        print('ContentDirectory response returned empty result set.');
-      }
+      _logDebug('ContentDirectory response returned empty result set.');
       return const [];
     }
 
@@ -182,9 +187,7 @@ class ImagingEdgeService {
 
     if (document.numberReturned > 0 && document.hasMore(startIndex)) {
       final nextStart = startIndex + document.numberReturned;
-      if (debug) {
-        print('More items available for $containerId, fetching from index $nextStart');
-      }
+      _logDebug('More items available for $containerId, fetching from index $nextStart');
       final moreItems = await _getContentDirectoryContent(
         containerId,
         startIndex: nextStart,
@@ -212,21 +215,19 @@ class ImagingEdgeService {
         if (triedRoots.contains(root)) continue;
         triedRoots.add(root);
 
-        if (debug) print('Browsing root container: $root');
+        _logDebug('Browsing root container: $root');
         try {
           await _browseRecursive(root, allImages);
           if (allImages.isNotEmpty) {
             break;
           }
         } catch (e) {
-          if (debug) {
-            print('Browse failed for $root: $e');
-          }
+          _logDebug('Browse failed for $root: $e');
           // Try next root
         }
       }
 
-      if (debug) print('Total images found: ${allImages.length}');
+      _logDebug('Total images found: ${allImages.length}');
       return allImages;
     } catch (e) {
       throw ImagingEdgeException('Failed to browse images: $e');
@@ -258,11 +259,11 @@ class ImagingEdgeService {
     Function(int downloaded, int total)? onProgress,
   }) async {
     try {
-      if (debug) print('Downloading: $url -> $outputPath');
+      _logDebug('Downloading: $url -> $outputPath');
       
       // Check if file already exists and has correct size
       if (await FileManager.isFileDownloaded(outputPath, expectedSize)) {
-        if (debug) print('File already exists and has correct size, skipping');
+        _logDebug('File already exists and has correct size, skipping');
         onProgress?.call(expectedSize ?? 0, expectedSize ?? 0);
         return;
       }
@@ -299,11 +300,12 @@ class ImagingEdgeService {
           }
         }
         
-        if (debug) print('Download completed: $outputPath');
+        _logDebug('Download completed: $outputPath');
       } else {
         throw ImagingEdgeException('HTTP ${response.statusCode}: ${response.reasonPhrase}');
       }
-    } catch (e) {
+    } catch (e, stack) {
+      _logWarning('Failed to download file', error: e, stackTrace: stack);
       throw ImagingEdgeException('Failed to download file: $e');
     }
   }

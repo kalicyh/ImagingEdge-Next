@@ -32,9 +32,9 @@ class _ConnectionScreenState extends ConsumerState<ConnectionScreen> {
 
   @override
   Widget build(BuildContext context) {
-  final cameraState = ref.watch(cameraProvider);
+    final cameraState = ref.watch(cameraProvider);
     final l10n = AppLocalizations.of(context)!;
-    
+
     return Scaffold(
       extendBody: true,
       appBar: AppBar(
@@ -55,197 +55,203 @@ class _ConnectionScreenState extends ConsumerState<ConnectionScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                // Connection status card
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      children: [
-                        Icon(
-                          _getStatusIcon(cameraState.connectionState),
-                          size: 48,
-                          color: _getStatusColor(cameraState.connectionState),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          _getStatusText(cameraState.connectionState, l10n),
-                          style: Theme.of(context).textTheme.titleMedium,
-                          textAlign: TextAlign.center,
-                        ),
-                        if (cameraState.hasError) ...[
-                          const SizedBox(height: 8),
-                          Builder(
-                            builder: (context) {
-                              final errorText = cameraState.errorMessage ==
-                                      camera.CameraNotifier.wifiErrorMessageCode
-                                  ? l10n.cameraErrorWifi
-                                  : (cameraState.errorMessage ??
-                                      l10n.connectionUnknownError);
-                              return Text(
-                                errorText,
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.error,
-                                  fontSize: 12,
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              children: [
+                                Icon(
+                                  _getStatusIcon(cameraState.connectionState),
+                                  size: 48,
+                                  color: _getStatusColor(cameraState.connectionState),
                                 ),
-                                textAlign: TextAlign.center,
-                              );
-                            },
+                                const SizedBox(height: 8),
+                                Text(
+                                  _getStatusText(cameraState.connectionState, l10n),
+                                  style: Theme.of(context).textTheme.titleMedium,
+                                  textAlign: TextAlign.center,
+                                ),
+                                if (cameraState.hasError) ...[
+                                  const SizedBox(height: 8),
+                                  Builder(
+                                    builder: (context) {
+                                      final errorText = cameraState.errorMessage ==
+                                              camera.CameraNotifier.wifiErrorMessageCode
+                                          ? l10n.cameraErrorWifi
+                                          : (cameraState.errorMessage ??
+                                              l10n.connectionUnknownError);
+                                      return Text(
+                                        errorText,
+                                        style: TextStyle(
+                                          color: Theme.of(context).colorScheme.error,
+                                          fontSize: 12,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      );
+                                    },
+                                  ),
+                                  if (cameraState.lastWiFiSsid != null) ...[
+                                    const SizedBox(height: 12),
+                                    ElevatedButton.icon(
+                                      onPressed:
+                                          cameraState.isConnecting || _isRetryingWifi
+                                              ? null
+                                              : () => _retryLastConnection(context, ref),
+                                      icon: _isRetryingWifi
+                                          ? const SizedBox(
+                                              width: 16,
+                                              height: 16,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                              ),
+                                            )
+                                          : const Icon(Icons.refresh),
+                                      label: Text(
+                                        _isRetryingWifi
+                                            ? l10n.connectionRetrying
+                                            : l10n.connectionRetryLast,
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        minimumSize: const Size(double.infinity, 40),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ],
+                            ),
                           ),
-                          if (cameraState.lastWiFiSsid != null) ...[
-                            const SizedBox(height: 12),
-                            ElevatedButton.icon(
-                              onPressed: cameraState.isConnecting || _isRetryingWifi
-                                  ? null
-                                  : () => _retryLastConnection(context, ref),
-                              icon: _isRetryingWifi
-                                  ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(strokeWidth: 2),
-                                    )
-                                  : const Icon(Icons.refresh),
-                              label: Text(
-                                _isRetryingWifi
-                                    ? l10n.connectionRetrying
-                                    : l10n.connectionRetryLast,
+                        ),
+                        const SizedBox(height: 24),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: cameraState.isConnecting
+                                    ? null
+                                    : () async {
+                                        final result =
+                                            await Navigator.push<CameraConnectionInfo>(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => const QRScannerScreen(),
+                                          ),
+                                        );
+
+                                        if (result != null) {
+                                          ref
+                                              .read(settingsProvider.notifier)
+                                              .setCameraAddress(result.ipAddress);
+                                          ref
+                                              .read(settingsProvider.notifier)
+                                              .setCameraPort(result.port);
+
+                                          if (!context.mounted) return;
+                                          final messenger = ScaffoldMessenger.of(context);
+                                          messenger.showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                l10n.connectionCameraInfoSet(
+                                                  result.ipAddress,
+                                                  result.name,
+                                                  result.port,
+                                                ),
+                                              ),
+                                              backgroundColor: Colors.green,
+                                            ),
+                                          );
+                                        }
+                                      },
+                                icon: const Icon(Icons.qr_code_scanner),
+                                label: Text(l10n.connectionScanQr),
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                ),
                               ),
-                              style: ElevatedButton.styleFrom(
-                                minimumSize: const Size(double.infinity, 40),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: cameraState.isConnecting
+                                    ? null
+                                    : () => _showManualInputDialog(context, ref),
+                                icon: const Icon(Icons.edit_note),
+                                label: Text(l10n.connectionManualInput),
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                ),
                               ),
                             ),
                           ],
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-                
-                // QR Code scanning
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: cameraState.isConnecting ? null : () async {
-                          final result = await Navigator.push<CameraConnectionInfo>(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const QRScannerScreen(),
-                            ),
-                          );
-
-                        if (result != null) {
-                            ref
-                                .read(settingsProvider.notifier)
-                                .setCameraAddress(result.ipAddress);
-                            ref
-                                .read(settingsProvider.notifier)
-                                .setCameraPort(result.port);
-
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    l10n.connectionCameraInfoSet(
-                                      result.ipAddress,
-                                      result.name,
-                                      result.port,
-                                    ),
-                                  ),
-                                  backgroundColor: Colors.green,
+                        ),
+                        const SizedBox(height: 24),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: cameraState.isConnecting
+                                    ? null
+                                    : () async {
+                                        await ref
+                                            .read(cameraProvider.notifier)
+                                            .connect();
+                                      },
+                                icon: cameraState.isConnecting
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                      )
+                                    : const Icon(Icons.wifi),
+                                label: Text(
+                                  cameraState.isConnecting
+                                      ? l10n.connectionConnecting
+                                      : l10n.connectionConnect,
                                 ),
-                              );
-                            }
-                          }
-                        },
-                        icon: const Icon(Icons.qr_code_scanner),
-                        label: Text(l10n.connectionScanQr),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: !cameraState.isConnected
+                                    ? null
+                                    : () async {
+                                        await ref
+                                            .read(cameraProvider.notifier)
+                                            .disconnect();
+                                      },
+                                icon: const Icon(Icons.wifi_off),
+                                label: Text(l10n.connectionDisconnect),
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: cameraState.isConnecting
-                            ? null
-                            : () => _showManualInputDialog(context, ref),
-                        icon: const Icon(Icons.edit_note),
-                        label: Text(l10n.connectionManualInput),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // Connection buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: cameraState.isConnecting ? null : () async {
-                          await ref.read(cameraProvider.notifier).connect();
-                        },
-                        icon: cameraState.isConnecting 
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : const Icon(Icons.wifi),
-                        label: Text(
-                          cameraState.isConnecting
-                              ? l10n.connectionConnecting
-                              : l10n.connectionConnect,
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                      ),
-                    ),
-                    
-                    const SizedBox(width: 16),
-                    
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: !cameraState.isConnected ? null : () async {
-                          await ref.read(cameraProvider.notifier).disconnect();
-                        },
-                        icon: const Icon(Icons.wifi_off),
-                        label: Text(l10n.connectionDisconnect),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                
-                if (cameraState.isConnected) ...[
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/images');
-                      },
-                      icon: const Icon(Icons.photo_library),
-                      label: Text(l10n.connectionBrowse),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                      ),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 120),
+                        if (cameraState.isConnected) ...[
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.pushNamed(context, '/images');
+                              },
+                              icon: const Icon(Icons.photo_library),
+                              label: Text(l10n.connectionBrowse),
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                backgroundColor:
+                                    Theme.of(context).colorScheme.primary,
+                                foregroundColor:
+                                    Theme.of(context).colorScheme.onPrimary,
+                              ),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 120),
                       ],
                     ),
                   ),
@@ -267,7 +273,7 @@ class _ConnectionScreenState extends ConsumerState<ConnectionScreen> {
       _isRetryingWifi = true;
     });
     final success = await notifier.retryLastWifi();
-    if (!mounted) return;
+    if (!context.mounted) return;
     setState(() {
       _isRetryingWifi = false;
     });
@@ -322,7 +328,6 @@ class _ConnectionScreenState extends ConsumerState<ConnectionScreen> {
   }
 
   Future<void> _handleManualInput(String data, WidgetRef ref) async {
-    final l10n = AppLocalizations.of(context)!;
     final wifiData = QRScannerService.parseWiFiQRCode(data);
     if (wifiData != null) {
       final ssid = wifiData['SSID'] ?? wifiData['S'] ?? '';
@@ -336,7 +341,9 @@ class _ConnectionScreenState extends ConsumerState<ConnectionScreen> {
         hidden: isHiddenNetwork,
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      final l10n = AppLocalizations.of(context)!;
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.showSnackBar(
         SnackBar(
           content: Text(
             success
@@ -365,7 +372,9 @@ class _ConnectionScreenState extends ConsumerState<ConnectionScreen> {
       ref.read(settingsProvider.notifier).setCameraAddress(cameraInfo.ipAddress);
       ref.read(settingsProvider.notifier).setCameraPort(cameraInfo.port);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      final l10n = AppLocalizations.of(context)!;
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.showSnackBar(
         SnackBar(
           content: Text(
             l10n.connectionCameraInfoSet(
@@ -381,7 +390,9 @@ class _ConnectionScreenState extends ConsumerState<ConnectionScreen> {
     }
 
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(
       SnackBar(
         content: Text(l10n.connectionManualInputInvalid),
         backgroundColor: Colors.redAccent,

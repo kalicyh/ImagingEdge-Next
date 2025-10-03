@@ -40,29 +40,49 @@ class ImagesState {
 }
 
 /// Images provider implementation
-class ImagesNotifier extends StateNotifier<ImagesState> {
-  ImagesNotifier(this._settings) : super(const ImagesState());
-
-  AppSettings _settings;
+class ImagesNotifier extends Notifier<ImagesState> {
+  AppSettings? _settings;
   ImagingEdgeService? _service;
+  bool _initialized = false;
 
-  /// Initialize service with current settings
-  void _initializeService() {
-    _service = ImagingEdgeService(
-      address: _settings.cameraAddress,
-      port: _settings.cameraPort,
-      debug: _settings.debugMode,
+  @override
+  ImagesState build() {
+    _ensureSettingsListener();
+    return const ImagesState();
+  }
+
+  void _ensureSettingsListener() {
+    if (_initialized) return;
+    _initialized = true;
+
+    final currentSettings = ref.read(settingsProvider);
+    _applySettings(currentSettings);
+
+    ref.listen<AppSettings>(
+      settingsProvider,
+      (previous, next) => _applySettings(next),
+      fireImmediately: false,
     );
   }
 
-  /// Update service when settings change
-  void updateSettings(AppSettings settings) {
+  void _applySettings(AppSettings settings) {
+    _settings = settings;
+    _initializeService();
+  }
+
+  /// Initialize service with current settings
+  void _initializeService() {
+    final settings = _settings;
+    if (settings == null) {
+      _service = null;
+      return;
+    }
+
     _service = ImagingEdgeService(
       address: settings.cameraAddress,
       port: settings.cameraPort,
       debug: settings.debugMode,
     );
-    _settings = settings;
   }
 
   /// Browse images from camera
@@ -93,8 +113,13 @@ class ImagesNotifier extends StateNotifier<ImagesState> {
 
   /// Update download status for images
   Future<List<ImageModel>> _updateDownloadStatus(List<ImageModel> images) async {
-    final outputDir = _settings.outputDirectory.isNotEmpty 
-        ? _settings.outputDirectory
+    final settings = _settings;
+    if (settings == null) {
+      return images;
+    }
+
+    final outputDir = settings.outputDirectory.isNotEmpty 
+        ? settings.outputDirectory
         : (await FileManager.getDefaultOutputDirectory()).path;
 
     final updatedImages = <ImageModel>[];
@@ -192,30 +217,50 @@ class DownloadState {
 }
 
 /// Download provider implementation
-class DownloadNotifier extends StateNotifier<DownloadState> {
-  DownloadNotifier(this._settings) : super(const DownloadState());
-
-  AppSettings _settings;
+class DownloadNotifier extends Notifier<DownloadState> {
+  AppSettings? _settings;
   ImagingEdgeService? _service;
   bool _isCancelled = false;
+  bool _initialized = false;
 
-  /// Initialize service with current settings
-  void _initializeService() {
-    _service = ImagingEdgeService(
-      address: _settings.cameraAddress,
-      port: _settings.cameraPort,
-      debug: _settings.debugMode,
+  @override
+  DownloadState build() {
+    _ensureSettingsListener();
+    return const DownloadState();
+  }
+
+  void _ensureSettingsListener() {
+    if (_initialized) return;
+    _initialized = true;
+
+    final currentSettings = ref.read(settingsProvider);
+    _applySettings(currentSettings);
+
+    ref.listen<AppSettings>(
+      settingsProvider,
+      (previous, next) => _applySettings(next),
+      fireImmediately: false,
     );
   }
 
-  /// Update service when settings change
-  void updateSettings(AppSettings settings) {
+  void _applySettings(AppSettings settings) {
+    _settings = settings;
+    _initializeService();
+  }
+
+  /// Initialize service with current settings
+  void _initializeService() {
+    final settings = _settings;
+    if (settings == null) {
+      _service = null;
+      return;
+    }
+
     _service = ImagingEdgeService(
       address: settings.cameraAddress,
       port: settings.cameraPort,
       debug: settings.debugMode,
     );
-    _settings = settings;
   }
 
   /// Start downloading images
@@ -223,7 +268,8 @@ class DownloadNotifier extends StateNotifier<DownloadState> {
     if (state.isDownloading || images.isEmpty) return;
 
     _initializeService();
-    if (_service == null) return;
+    final settings = _settings;
+    if (_service == null || settings == null) return;
 
     _isCancelled = false;
     
@@ -243,16 +289,16 @@ class DownloadNotifier extends StateNotifier<DownloadState> {
       await _service!.startTransfer();
       
       // Show notification if enabled
-      if (_settings.notificationsEnabled) {
+      if (settings.notificationsEnabled) {
         await NotificationService.showDownloadStartNotification(
           images.length,
-          localeCode: _settings.localeCode,
+          localeCode: settings.localeCode,
         );
       }
 
       // Get output directory
-      final outputDir = _settings.outputDirectory.isNotEmpty 
-          ? _settings.outputDirectory
+      final outputDir = settings.outputDirectory.isNotEmpty
+          ? settings.outputDirectory
           : (await FileManager.getDefaultOutputDirectory()).path;
 
       await FileManager.ensureDirectoryExists(outputDir);
@@ -288,7 +334,7 @@ class DownloadNotifier extends StateNotifier<DownloadState> {
         // Get best quality URL
         final url = image.bestQualityUrl;
         if (url == null) {
-          print('No URL available for image: ${image.title}');
+          logWarning('No URL available for image: ${image.title}');
           continue;
         }
 
@@ -317,13 +363,13 @@ class DownloadNotifier extends StateNotifier<DownloadState> {
               );
 
               // Update progress notification
-              if (_settings.notificationsEnabled) {
+              if (settings.notificationsEnabled) {
                 NotificationService.showProgressNotification(
                   currentFile: completedFiles + 1,
                   totalFiles: images.length,
                   fileName: filename,
                   progress: total > 0 ? downloaded / total : 0.0,
-                  localeCode: _settings.localeCode,
+                  localeCode: settings.localeCode,
                 );
               }
             }
@@ -347,12 +393,12 @@ class DownloadNotifier extends StateNotifier<DownloadState> {
         );
 
         // Show completion notification
-        if (_settings.notificationsEnabled) {
+        if (settings.notificationsEnabled) {
           await NotificationService.cancelProgressNotification();
           await NotificationService.showDownloadCompletedNotification(
             completedFiles,
             outputDir,
-            localeCode: _settings.localeCode,
+            localeCode: settings.localeCode,
           );
         }
       }
@@ -366,11 +412,11 @@ class DownloadNotifier extends StateNotifier<DownloadState> {
       );
 
       // Show error notification
-      if (_settings.notificationsEnabled) {
+      if (settings.notificationsEnabled) {
         await NotificationService.cancelProgressNotification();
         await NotificationService.showDownloadErrorNotification(
           e.toString(),
-          localeCode: _settings.localeCode,
+          localeCode: settings.localeCode,
         );
       }
     } finally {
@@ -400,7 +446,8 @@ class DownloadNotifier extends StateNotifier<DownloadState> {
     );
 
     // Cancel progress notification
-    if (_settings.notificationsEnabled) {
+    final settings = _settings;
+    if (settings?.notificationsEnabled ?? false) {
       NotificationService.cancelProgressNotification();
     }
   }
@@ -412,27 +459,11 @@ class DownloadNotifier extends StateNotifier<DownloadState> {
 }
 
 /// Images provider
-final imagesProvider = StateNotifierProvider<ImagesNotifier, ImagesState>((ref) {
-  final settings = ref.watch(settingsProvider);
-  final notifier = ImagesNotifier(settings);
-  
-  // Listen to settings changes
-  ref.listen(settingsProvider, (previous, next) {
-    notifier.updateSettings(next);
-  });
-  
-  return notifier;
-});
+final imagesProvider = NotifierProvider<ImagesNotifier, ImagesState>(
+  ImagesNotifier.new,
+);
 
 /// Download provider
-final downloadProvider = StateNotifierProvider<DownloadNotifier, DownloadState>((ref) {
-  final settings = ref.watch(settingsProvider);
-  final notifier = DownloadNotifier(settings);
-  
-  // Listen to settings changes
-  ref.listen(settingsProvider, (previous, next) {
-    notifier.updateSettings(next);
-  });
-  
-  return notifier;
-});
+final downloadProvider = NotifierProvider<DownloadNotifier, DownloadState>(
+  DownloadNotifier.new,
+);
