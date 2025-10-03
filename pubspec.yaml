@@ -75,6 +75,7 @@ dev_dependencies:
   # Additional dev dependencies
   riverpod_lint: ^2.3.7                 # Riverpod linting
   mockito: ^5.4.2                       # Testing mocks
+  flutter_launcher_icons: ^0.14.1       # App icon generation
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -118,3 +119,21 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+flutter_launcher_icons:
+  image_path: "icon.png"
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  macos:
+    generate: true
+    image_path: "icon.png"
+  windows:
+    generate: true
+    image_path: "icon.png"
+  linux:
+    generate: true
+    image_path: "icon.png"
+  web:
+    generate: true
+    image_path: "icon.png"
