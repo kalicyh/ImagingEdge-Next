@@ -27,7 +27,7 @@ void main() async {
       backgroundColor: Colors.transparent,
       skipTaskbar: false,
       titleBarStyle: TitleBarStyle.hidden,
-      title: 'ImagingEdge Next',
+      title: 'ImagingNext',
     );
 
     await windowManager.waitUntilReadyToShow(windowOptions, () async {
@@ -61,7 +61,7 @@ class ImagingEdgeApp extends ConsumerWidget {
 
     return MaterialApp(
       onGenerateTitle: (context) =>
-          AppLocalizations.of(context)?.appTitle ?? 'ImagingEdge Next',
+          AppLocalizations.of(context)?.appTitle ?? 'ImagingNext',
       locale: locale,
       supportedLocales: const [
         Locale('en'),

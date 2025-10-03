@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# macOS release packaging script for ImagingEdge Next.
+# macOS release packaging script for ImagingNext.
 # Builds the Flutter macOS release (unless skipped) and produces a DMG using create-dmg.
 # Copies the resulting .app bundle and gathers Android release artifacts into the dist directory.
 
@@ -39,7 +39,7 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 BUILD_DIR="${PROJECT_ROOT}/build/macos/Build/Products/Release"
 APPINFO_FILE="${PROJECT_ROOT}/macos/Runner/Configs/AppInfo.xcconfig"
 
-PRODUCT_NAME="ImagingEdge Next"
+PRODUCT_NAME="ImagingNext"
 if [[ -f "${APPINFO_FILE}" ]]; then
   CONFIG_VALUE="$(grep -E '^\s*PRODUCT_NAME\s*=' "${APPINFO_FILE}" | tail -1 | cut -d'=' -f2-)"
   if [[ -n "${CONFIG_VALUE}" ]]; then

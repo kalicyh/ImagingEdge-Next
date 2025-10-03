@@ -1,6 +1,6 @@
 {
   "@@locale": "en",
-  "appTitle": "ImagingEdge Next",
+  "appTitle": "ImagingNext",
   "navSettings": "Settings",
   "navImages": "Images",
   "commonCancel": "Cancel",
@@ -95,7 +95,7 @@
   "settingsReset": "Reset",
   "settingsResetSuccess": "Settings reset to defaults",
   "settingsAboutSection": "About",
-  "settingsAboutApp": "ImagingEdge Next",
+  "settingsAboutApp": "ImagingNext",
   "settingsAboutAppSubtitle": "Flutter edition for Sony cameras",
   "settingsAboutCompatible": "Compatible Cameras",
   "settingsAboutCompatibleSubtitle": "Works with cameras that support Send to Smartphone",

@@ -1,6 +1,6 @@
 {
   "@@locale": "zh",
-  "appTitle": "ImagingEdge Next",
+  "appTitle": "ImagingNext",
   "navSettings": "设置",
   "navImages": "图像",
   "commonCancel": "取消",
@@ -95,7 +95,7 @@
   "settingsReset": "重置",
   "settingsResetSuccess": "设置已恢复为默认值",
   "settingsAboutSection": "关于",
-  "settingsAboutApp": "ImagingEdge Next",
+  "settingsAboutApp": "ImagingNext",
   "settingsAboutAppSubtitle": "面向索尼相机的 Flutter 版本",
   "settingsAboutCompatible": "兼容相机",
   "settingsAboutCompatibleSubtitle": "适用于支持“发送到智能手机”功能的相机",

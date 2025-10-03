@@ -1,4 +1,4 @@
-# ImagingEdge Next
+# ImagingNext
 
 一款现代化的 Flutter 桌面应用，用于从索尼相机下载照片，灵感来源于原始的 [ImagingEdge4Linux](https://github.com/schorschii/ImagingEdge4Linux) 项目。该应用提供友好的图形界面，可通过 WiFi 与索尼相机连接并下载照片，无需官方手机应用。
 
@@ -52,7 +52,7 @@
    - 在索尼相机上启用“发送到智能手机”模式
 
 2. **在应用中连接**：
-   - 启动 ImagingEdge Next
+   - 启动 ImagingNext
    - 点击“扫码二维码”按钮，扫描相机屏幕上的二维码以连接，或者手动连接相机的 WiFi 网络
   - iOS 版本未申请 `NEHotspotConfiguration` 权限，请使用系统相机扫描二维码加入相机 WiFi
 

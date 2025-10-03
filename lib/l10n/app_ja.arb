@@ -1,6 +1,6 @@
 {
   "@@locale": "ja",
-  "appTitle": "ImagingEdge Next",
+  "appTitle": "ImagingNext",
   "navSettings": "設定",
   "navImages": "画像",
   "commonCancel": "キャンセル",
@@ -95,7 +95,7 @@
   "settingsReset": "リセット",
   "settingsResetSuccess": "設定を初期値に戻しました",
   "settingsAboutSection": "アプリについて",
-  "settingsAboutApp": "ImagingEdge Next",
+  "settingsAboutApp": "ImagingNext",
   "settingsAboutAppSubtitle": "ソニー製カメラ向けFlutter版",
   "settingsAboutCompatible": "対応カメラ",
   "settingsAboutCompatibleSubtitle": "Send to Smartphone に対応したカメラで動作します",
