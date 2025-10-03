@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:imagingedge_next/l10n/app_localizations.dart';
@@ -218,13 +219,36 @@ class _ImagesScreenState extends ConsumerState<ImagesScreen> {
               ),
             ),
             
+            // Downloaded overlay
+            if (image.isDownloaded)
+              Positioned.fill(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: BackdropFilter(
+                    filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white.withOpacity(0.35),
+                            Colors.white.withOpacity(0.15),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
             // Selection overlay
             if (isSelected)
               Positioned.fill(
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.25),
                   ),
                 ),
               ),
@@ -235,28 +259,43 @@ class _ImagesScreenState extends ConsumerState<ImagesScreen> {
               right: 4,
               child: Container(
                 decoration: BoxDecoration(
-                  color: isSelected 
+                  color: isSelected
                       ? Theme.of(context).colorScheme.primary
-                      : Colors.white.withOpacity(0.8),
+                      : Colors.black.withOpacity(0.24),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
-                  isSelected ? Icons.check : Icons.check_box_outline_blank,
-                  color: isSelected ? Colors.white : Colors.grey,
+                  isSelected ? Icons.check_circle : Icons.circle_outlined,
+                  color: Colors.white,
                   size: 20,
                 ),
               ),
             ),
             
-            // Download status
             if (image.isDownloaded)
-              const Positioned(
-                bottom: 4,
-                left: 4,
-                child: Icon(
-                  Icons.download_done,
-                  color: Colors.green,
-                  size: 20,
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.45),
+                        borderRadius: BorderRadius.circular(48),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 18,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.check_rounded,
+                        size: 36,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             
