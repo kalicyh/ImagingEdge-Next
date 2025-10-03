@@ -17,22 +17,37 @@ class CameraState {
   final ConnectionState connectionState;
   final CameraModel? camera;
   final String? errorMessage;
+  final String? lastWiFiSsid;
+  final String? lastWiFiPassword;
+  final bool? lastWiFiHidden;
 
   const CameraState({
     this.connectionState = ConnectionState.disconnected,
     this.camera,
     this.errorMessage,
+    this.lastWiFiSsid,
+    this.lastWiFiPassword,
+    this.lastWiFiHidden,
   });
 
   CameraState copyWith({
     ConnectionState? connectionState,
     CameraModel? camera,
     String? errorMessage,
+    String? lastWiFiSsid,
+    String? lastWiFiPassword,
+    bool? lastWiFiHidden,
+    bool clearLastWiFi = false,
   }) {
     return CameraState(
       connectionState: connectionState ?? this.connectionState,
       camera: camera ?? this.camera,
       errorMessage: errorMessage ?? this.errorMessage,
+      lastWiFiSsid: clearLastWiFi ? null : (lastWiFiSsid ?? this.lastWiFiSsid),
+      lastWiFiPassword:
+          clearLastWiFi ? null : (lastWiFiPassword ?? this.lastWiFiPassword),
+      lastWiFiHidden:
+          clearLastWiFi ? null : (lastWiFiHidden ?? this.lastWiFiHidden),
     );
   }
 
@@ -71,13 +86,21 @@ class CameraNotifier extends StateNotifier<CameraState> {
   }
 
   /// Connect to camera
-  Future<void> connect() async {
+  Future<void> connect({Map<String, String>? wifiInfo}) async {
     if (_service == null) return;
     
     state = state.copyWith(
       connectionState: ConnectionState.connecting,
       errorMessage: null,
     );
+
+    if (wifiInfo != null) {
+      state = state.copyWith(
+        lastWiFiSsid: wifiInfo['ssid'],
+        lastWiFiPassword: wifiInfo['password'],
+        lastWiFiHidden: wifiInfo['hidden'] == 'true',
+      );
+    }
 
     try {
       final camera = await _service!.getServiceInfo();
@@ -86,6 +109,7 @@ class CameraNotifier extends StateNotifier<CameraState> {
         connectionState: ConnectionState.connected,
         camera: camera,
         errorMessage: null,
+        clearLastWiFi: true,
       );
 
       // Show notification if enabled
@@ -115,6 +139,34 @@ class CameraNotifier extends StateNotifier<CameraState> {
         );
       }
     }
+  }
+
+  Future<bool> retryLastWifi() async {
+    final ssid = state.lastWiFiSsid;
+    if (ssid == null) {
+      return false;
+    }
+
+    final password = state.lastWiFiPassword ?? '';
+    final hidden = state.lastWiFiHidden ?? false;
+
+    final wifiConnected = await QRScannerService.connectToWiFi(
+      ssid,
+      password,
+      hidden: hidden,
+    );
+
+    if (!wifiConnected) {
+      return false;
+    }
+
+    await connect(wifiInfo: {
+      'ssid': ssid,
+      'password': password,
+      'hidden': hidden.toString(),
+    });
+
+    return true;
   }
 
   /// Disconnect from camera

@@ -28,6 +28,8 @@
   "connectionCameraInfoSet": "Camera info updated: {name} ({ip}:{port})",
   "connectionWifiConnecting": "Connecting to network: {ssid}",
   "connectionWifiFailed": "Wi-Fi connection failed, please check the network and try again",
+    "connectionRetryLast": "Retry Last Connection",
+    "connectionRetrying": "Retrying...",
   "connectionManualInputHint": "Enter QR content or IP address",
   "connectionManualInputInvalid": "Unable to parse input, please check the format",
   "connectionWifiInstruction": "Please make sure you are connected to the camera Wi-Fi",

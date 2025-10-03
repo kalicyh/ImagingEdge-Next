@@ -28,6 +28,8 @@
   "connectionCameraInfoSet": "カメラ情報を更新しました: {name} ({ip}:{port})",
   "connectionWifiConnecting": "ネットワークに接続中: {ssid}",
   "connectionWifiFailed": "Wi-Fiの接続に失敗しました。ネットワークを確認して再試行してください",
+  "connectionRetryLast": "前回の接続を再試行",
+  "connectionRetrying": "再試行中...",
   "connectionManualInputHint": "QRコードの内容またはIPアドレスを入力",
   "connectionManualInputInvalid": "入力内容を解析できません。形式を確認してください",
   "connectionWifiInstruction": "カメラのWi-Fiに接続しているか確認してください",

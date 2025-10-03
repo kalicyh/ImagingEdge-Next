@@ -16,6 +16,7 @@ class ConnectionScreen extends ConsumerStatefulWidget {
 
 class _ConnectionScreenState extends ConsumerState<ConnectionScreen> {
   final TextEditingController _manualInputController = TextEditingController();
+  bool _isRetryingWifi = false;
 
   @override
   void initState() {
@@ -30,7 +31,7 @@ class _ConnectionScreenState extends ConsumerState<ConnectionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cameraState = ref.watch(cameraProvider);
+  final cameraState = ref.watch(cameraProvider);
     final l10n = AppLocalizations.of(context)!;
     
     return Scaffold(
@@ -97,6 +98,29 @@ class _ConnectionScreenState extends ConsumerState<ConnectionScreen> {
                               );
                             },
                           ),
+                          if (cameraState.lastWiFiSsid != null) ...[
+                            const SizedBox(height: 12),
+                            ElevatedButton.icon(
+                              onPressed: cameraState.isConnecting || _isRetryingWifi
+                                  ? null
+                                  : () => _retryLastConnection(context, ref),
+                              icon: _isRetryingWifi
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    )
+                                  : const Icon(Icons.refresh),
+                              label: Text(
+                                _isRetryingWifi
+                                    ? l10n.connectionRetrying
+                                    : l10n.connectionRetryLast,
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                minimumSize: const Size(double.infinity, 40),
+                              ),
+                            ),
+                          ],
                         ],
                       ],
                     ),
@@ -240,6 +264,31 @@ class _ConnectionScreenState extends ConsumerState<ConnectionScreen> {
     );
   }
 
+  Future<void> _retryLastConnection(BuildContext context, WidgetRef ref) async {
+  final notifier = ref.read(cameraProvider.notifier);
+  final currentState = ref.read(cameraProvider);
+  final ssid = currentState.lastWiFiSsid;
+    setState(() {
+      _isRetryingWifi = true;
+    });
+    final success = await notifier.retryLastWifi();
+    if (!mounted) return;
+    setState(() {
+      _isRetryingWifi = false;
+    });
+    final l10n = AppLocalizations.of(context)!;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success && ssid != null
+              ? l10n.connectionWifiConnecting(ssid)
+              : l10n.connectionWifiFailed,
+        ),
+        backgroundColor: success ? Colors.green : Colors.redAccent,
+      ),
+    );
+  }
+
   Future<void> _showManualInputDialog(BuildContext context, WidgetRef ref) async {
     _manualInputController.clear();
     await showDialog(
@@ -283,7 +332,14 @@ class _ConnectionScreenState extends ConsumerState<ConnectionScreen> {
     if (wifiData != null) {
       final ssid = wifiData['SSID'] ?? wifiData['S'] ?? '';
       final password = wifiData['PASSWORD'] ?? wifiData['P'] ?? '';
-      final success = await QRScannerService.connectToWiFi(ssid, password);
+      final hiddenRaw = (wifiData['HIDDEN'] ?? wifiData['H'] ?? '').toLowerCase();
+      final isHiddenNetwork =
+          hiddenRaw == 'true' || hiddenRaw == '1' || hiddenRaw == 'yes';
+      final success = await QRScannerService.connectToWiFi(
+        ssid,
+        password,
+        hidden: isHiddenNetwork,
+      );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -299,7 +355,11 @@ class _ConnectionScreenState extends ConsumerState<ConnectionScreen> {
       if (success) {
         final currentState = ref.read(cameraProvider);
         if (!currentState.isConnected && !currentState.isConnecting) {
-          await ref.read(cameraProvider.notifier).connect();
+          await ref.read(cameraProvider.notifier).connect(wifiInfo: {
+            'ssid': ssid,
+            'password': password,
+            'hidden': isHiddenNetwork.toString(),
+          });
         }
       }
       return;

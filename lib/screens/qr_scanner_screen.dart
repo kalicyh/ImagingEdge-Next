@@ -322,7 +322,12 @@ class _QRScannerScreenState extends ConsumerState<QRScannerScreen> {
         _showResult(l10n.connectionWifiConnecting(ssid));
         final cameraState = ref.read(camera.cameraProvider);
         if (!cameraState.isConnected && !cameraState.isConnecting) {
-          ref.read(camera.cameraProvider.notifier).connect();
+          ref.read(camera.cameraProvider.notifier).connect(wifiInfo: {
+            'ssid': ssid,
+            'password': password,
+            'hidden': isHiddenNetwork.toString(),
+            'raw': wifiData['RAW'] ?? data,
+          });
         }
         Future.microtask(() {
           if (mounted) {

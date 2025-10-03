@@ -28,6 +28,8 @@
   "connectionCameraInfoSet": "相机信息已设置：{name} ({ip}:{port})",
   "connectionWifiConnecting": "正在连接网络：{ssid}",
   "connectionWifiFailed": "Wi-Fi 连接失败，请检查网络后重试",
+    "connectionRetryLast": "重试上次连接",
+    "connectionRetrying": "正在重试...",
   "connectionManualInputHint": "请输入二维码内容或 IP 地址",
   "connectionManualInputInvalid": "无法识别输入内容，请检查格式",
   "connectionWifiInstruction": "请确认已连接到相机 Wi-Fi",
