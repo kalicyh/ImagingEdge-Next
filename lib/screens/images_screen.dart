@@ -6,6 +6,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../models/models.dart';
 import '../providers/providers.dart';
 import '../utils/utils.dart';
+import '../widgets/fluid_dock.dart';
 
 class ImagesScreen extends ConsumerStatefulWidget {
   const ImagesScreen({super.key});
@@ -31,6 +32,7 @@ class _ImagesScreenState extends ConsumerState<ImagesScreen> {
     final l10n = AppLocalizations.of(context)!;
     
     return Scaffold(
+      extendBody: true,
       appBar: AppBar(
         title: Text(l10n.imagesTitle),
         // backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -73,7 +75,7 @@ class _ImagesScreenState extends ConsumerState<ImagesScreen> {
             _buildDownloadProgress(context, downloadState, l10n),
         ],
       ),
-      floatingActionButton: imagesState.hasImages && !downloadState.isDownloading
+    floatingActionButton: imagesState.hasImages && !downloadState.isDownloading
           ? FloatingActionButton.extended(
               onPressed: () async {
                 if (imagesState.hasSelection) {
@@ -90,6 +92,7 @@ class _ImagesScreenState extends ConsumerState<ImagesScreen> {
               ),
             )
           : null,
+      bottomNavigationBar: const FluidDock(currentRoute: '/images'),
     );
   }
 
@@ -171,7 +174,7 @@ class _ImagesScreenState extends ConsumerState<ImagesScreen> {
     }
     
     return GridView.builder(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 120),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
         crossAxisSpacing: 8,

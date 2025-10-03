@@ -6,6 +6,7 @@ import '../providers/camera_provider.dart' as camera;
 import '../services/services.dart';
 import 'qr_scanner_screen.dart';
 import '../services/qr_scanner_service.dart';
+import '../widgets/fluid_dock.dart';
 
 class ConnectionScreen extends ConsumerStatefulWidget {
   const ConnectionScreen({super.key});
@@ -35,6 +36,7 @@ class _ConnectionScreenState extends ConsumerState<ConnectionScreen> {
     final l10n = AppLocalizations.of(context)!;
     
     return Scaffold(
+      extendBody: true,
       appBar: AppBar(
         title: Text(l10n.appTitle),
         actions: [
@@ -252,6 +254,7 @@ class _ConnectionScreenState extends ConsumerState<ConnectionScreen> {
                     ),
                   ),
                 ],
+                const SizedBox(height: 120),
                       ],
                     ),
                   ),
@@ -261,13 +264,14 @@ class _ConnectionScreenState extends ConsumerState<ConnectionScreen> {
           ),
         ),
       ),
+      bottomNavigationBar: const FluidDock(currentRoute: '/'),
     );
   }
 
   Future<void> _retryLastConnection(BuildContext context, WidgetRef ref) async {
-  final notifier = ref.read(cameraProvider.notifier);
-  final currentState = ref.read(cameraProvider);
-  final ssid = currentState.lastWiFiSsid;
+    final notifier = ref.read(cameraProvider.notifier);
+    final currentState = ref.read(cameraProvider);
+    final ssid = currentState.lastWiFiSsid;
     setState(() {
       _isRetryingWifi = true;
     });

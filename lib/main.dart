@@ -105,6 +105,7 @@ class ImagingEdgeApp extends ConsumerWidget {
       routes: {
         '/': (context) => const ConnectionScreen(),
         '/images': (context) => const ImagesScreen(),
+        '/gallery': (context) => const GalleryScreen(),
         '/settings': (context) => const SettingsScreen(),
       },
       debugShowCheckedModeBanner: false,
