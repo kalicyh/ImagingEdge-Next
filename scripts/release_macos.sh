@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# macOS packaging script for ImagingEdge Next.
-# Builds the Flutter macOS release and produces a DMG using the create-dmg utility.
+# macOS release packaging script for ImagingEdge Next.
+# Builds the Flutter macOS release (unless skipped) and produces a DMG using create-dmg.
+# Copies the resulting .app bundle and gathers Android release artifacts into the dist directory.
 
 usage() {
   cat <<USAGE
@@ -52,6 +53,9 @@ DIST_DIR="${PROJECT_ROOT}/dist/macos"
 DMG_BASE="${PRODUCT_NAME//[ _]/-}"
 DMG_NAME="${DMG_BASE}-macOS.dmg"
 DMG_PATH="${DIST_DIR}/${DMG_NAME}"
+ANDROID_DIST_DIR="${PROJECT_ROOT}/dist/android"
+ANDROID_APK_PATH="${PROJECT_ROOT}/build/app/outputs/flutter-apk/app-release.apk"
+ANDROID_AAB_PATH="${PROJECT_ROOT}/build/app/outputs/bundle/release/app-release.aab"
 
 command -v flutter >/dev/null 2>&1 || {
   echo "Error: flutter command not found in PATH." >&2
@@ -65,9 +69,12 @@ command -v create-dmg >/dev/null 2>&1 || {
 }
 
 if [[ "${SKIP_BUILD}" == false ]]; then
+  echo "Building Flutter release artifacts..."
   flutter build macos --release
+  flutter build apk --release
+  flutter build appbundle --release
 else
-  echo "Skipping flutter build (using existing release build)."
+  echo "Skipping Flutter builds (using existing release artifacts)."
 fi
 
 if [[ ! -d "${APP_PATH}" ]]; then
@@ -98,8 +105,31 @@ if [[ -z "${DMG_SOURCE}" ]]; then
 fi
 
 mv "${DMG_SOURCE}" "${DMG_PATH}"
-cp -R "${APP_PATH}" "${DIST_DIR}/${APP_NAME}"
+# cp -R "${APP_PATH}" "${DIST_DIR}/${APP_NAME}"
 
-echo "Packaging complete."
-echo "App bundle: ${DIST_DIR}/${APP_NAME}"
-echo "DMG image: ${DMG_PATH}"
+echo "macOS packaging complete."
+# echo "  App bundle: ${DIST_DIR}/${APP_NAME}"
+echo "  DMG image: ${DMG_PATH}"
+
+mkdir -p "${ANDROID_DIST_DIR}"
+COPIED_ANDROID=false
+
+if [[ -f "${ANDROID_APK_PATH}" ]]; then
+  cp "${ANDROID_APK_PATH}" "${ANDROID_DIST_DIR}/app-release.apk"
+  echo "Copied Android APK to ${ANDROID_DIST_DIR}/app-release.apk"
+  COPIED_ANDROID=true
+else
+  echo "Android APK not found at ${ANDROID_APK_PATH}; skipping copy."
+fi
+
+if [[ -f "${ANDROID_AAB_PATH}" ]]; then
+  cp "${ANDROID_AAB_PATH}" "${ANDROID_DIST_DIR}/app-release.aab"
+  echo "Copied Android AAB to ${ANDROID_DIST_DIR}/app-release.aab"
+  COPIED_ANDROID=true
+else
+  echo "Android App Bundle not found at ${ANDROID_AAB_PATH}; skipping copy."
+fi
+
+if [[ "${COPIED_ANDROID}" == false ]]; then
+  echo "No Android release artifacts were copied. Run 'flutter build apk --release' or 'flutter build appbundle --release' first."
+fi

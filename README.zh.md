@@ -85,7 +85,7 @@
 
 ### 打包（macOS）
 
-在 macOS 上运行 `scripts/package_macos.sh`，脚本会在 `dist/macos` 目录生成发布版 `.app` 与 `.dmg`。如已执行过 `flutter build macos --release`，可添加 `--skip-build` 跳过编译。需要提前通过 `npm install --global create-dmg` 安装 [`create-dmg`](https://github.com/create-dmg/create-dmg) 工具。
+在 macOS 上运行 `scripts/release_macos.sh`，脚本会在 `dist/macos` 目录生成发布版 `.app` 与 `.dmg`。默认会依次执行 `flutter build macos --release`、`flutter build apk --release` 与 `flutter build appbundle --release`，若这些产物已经最新，可添加 `--skip-build` 跳过编译。需要提前通过 `npm install --global create-dmg` 安装 [`create-dmg`](https://github.com/create-dmg/create-dmg) 工具。脚本还会将生成的 Android 发布包（APK / AAB）自动拷贝到 `dist/android` 目录，便于统一分发。
 
 ## 限制
 

@@ -87,7 +87,7 @@ Images are downloaded in the best available quality:
 
 ### Packaging (macOS)
 
-Run `scripts/package_macos.sh` to build a release `.app` bundle and `.dmg` image in `dist/macos`. Add `--skip-build` if you already have a fresh `flutter build macos --release`. Requires macOS with the [`create-dmg`](https://github.com/create-dmg/create-dmg) utility installed via `npm install --global create-dmg`.
+Run `scripts/release_macos.sh` to build a release `.app` bundle and `.dmg` image in `dist/macos`. By default the script runs `flutter build macos --release`, `flutter build apk --release`, and `flutter build appbundle --release`; pass `--skip-build` if those artifacts are already up to date. Requires macOS with the [`create-dmg`](https://github.com/create-dmg/create-dmg) utility installed via `npm install --global create-dmg`. Android release outputs (APK and/or AAB) are copied into `dist/android` for convenience.
 
 ## Limitations
 
